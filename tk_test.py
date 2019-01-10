@@ -6,25 +6,7 @@ import sqlite3 as sql
 import datetime
 
 
-class Database:
 
-	db = sql.connect('Budget.db')
-	c = db.cursor()
-
-	def CreateTable(self):
-
-		self.c.execute('''CREATE TABLE IF NOT EXISTS dane(ID INTEGER PRIMARY KEY, Date DATE,
-		 Type TEXT, Category TEXT, Amount REAL, Payment TEXT)''')
-
-	def Commit(self):
-
-		self.db.commit()
-
-	def Add(self):
-
-		self.c.execute('INSERT INTO dane(Date, Type, Category, Amount, Payment) VALUES(?,?,?,?,?)',
-			(str(app.frame.EntryDate.get()), str(Type.get()), str(Category.get()), str(EntryAmount.get()), str(Payment.get())))
-    	
 
 		
 
@@ -211,7 +193,7 @@ class AddPage(Frame):
 				LabelName = Label(self,text=name)
 				LabelName.grid(row=i, column=0)
 				i=i+1
-
+			global EntryDateVariable,EntryAmount, Payment
 			EntryDateVariable = StringVar()
 			EntryDateVariable .set(DateFunctions.CurrentDate)		
 
@@ -248,9 +230,31 @@ class AddPage(Frame):
 
 			OptionPayment = OptionMenu(self, Payment, *Payments)
 			OptionPayment.grid(row=4, column=1)
-
+			DB=Database()
 			AddButton = Button(self,text='Add', command=lambda: DB.Add())
 			AddButton.grid(row=5, column=1)
+
+class Database:
+
+	db = sql.connect('Budget.db')
+	c = db.cursor()
+
+	def CreateTable(self):
+
+		self.c.execute('''CREATE TABLE IF NOT EXISTS dane(ID INTEGER PRIMARY KEY, Date DATE,
+		 Type TEXT, Category TEXT, Amount REAL, Payment TEXT)''')
+
+	def Commit(self):
+
+		self.db.commit()
+
+	def Add(self):
+		# print(EntryDateVariable.get(),EntryAmount,EntryAmount.get())
+
+		self.c.execute('INSERT INTO dane(Date, Type, Category, Amount, Payment) VALUES(?,?,?,?,?)',
+			(str(EntryDateVariable.get()), str(Type.get()), str(Category.get()), str(EntryAmount.get()), str(Payment.get())))
+		self.db.commit()
+    	
 			
 
 DB = Database()
