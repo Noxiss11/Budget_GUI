@@ -309,19 +309,19 @@ class ViewPage(Frame):
 
 	def __init__(self,parent,controller):
 			Frame .__init__(self,parent)
-
+			global tree
 			tree = ttk.Treeview(self,columns = ('ID','Date','Type','Category','Amount','Payment'))
 			tree.grid(row = 0, column = 0, columnspan=6)
-
+			global db_rows
 			records = tree.get_children()
-			db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane")
+			db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
 			for row in db_rows:
 				print(row)
 				tree.insert('',0,text=row[0], values=(row[1], row[2],row[3],row[4],row[5]))
 
 class Database:
 
-	db = sql.connect('Budget.db')
+	db = sql.connect('C:\\Projects\\Python\\GitHub\\budget\\Budget_GUI\\Budget.db')
 	c = db.cursor()
 
 
@@ -330,7 +330,15 @@ class Database:
 		for a in PrzychodyVariables:
 			PrzychodyVariables[a].set(self.GetAmount(a,str(MonthEntry2.get())[0:7]))
 			print(a)
+		
+		# tree.delete(100)
+
+		db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
 			
+		for row in db_rows:
+			tree.insert('',0,text=row[0], values=(row[1], row[2],row[3],row[4],row[5]))
+
+
 		print('refreshed')
 	def CreateTable(self):
 
