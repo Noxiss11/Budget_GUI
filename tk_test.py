@@ -1,10 +1,9 @@
 #-*- coding: utf-8 -*-
 from tkinter import *
 import tkinter as tk
-import ttk
+from tkinter import ttk
 import sqlite3 as sql
 import datetime
-
 
 
 
@@ -330,7 +329,8 @@ class Database:
 		print(MonthEntry2)
 		for a in PrzychodyVariables:
 			PrzychodyVariables[a].set(self.GetAmount(a,str(MonthEntry2.get())[0:7]))
-
+			print(a)
+			
 		print('refreshed')
 	def CreateTable(self):
 
