@@ -189,13 +189,6 @@ class MainPage(Frame):
 				LabelValueTest.grid(row=7,column=7)
 
 
-
-		
-
-			
-
-
-
 class AddPage(Frame):
 
 	
@@ -235,7 +228,7 @@ class AddPage(Frame):
 
 				if Type.get() == 'Przychody':
 					new_options = Przychody
-					print('przychody')
+					#print('przychody')
 				elif Type.get() == 'Rozchody':
 					new_options = Rozchody
 				else:
@@ -309,15 +302,39 @@ class ViewPage(Frame):
 
 	def __init__(self,parent,controller):
 			Frame .__init__(self,parent)
+
+			
+			# MonthLabel = Label(self,text='Month')
+			# MonthLabel.pack(side=TOP)
+			# month=StringVar()
+			# EntryMonth = Entry(self,textvariable = month)
+			# EntryMonth.pack(side=LEFT)
+			
 			global tree
-			tree = ttk.Treeview(self,columns = ('ID','Date','Type','Category','Amount','Payment'))
-			tree.grid(row = 0, column = 0, columnspan=6)
+
+			
+			columnNames =('ID','Date','Type','Category','Amount','Payment')
+			scroll = ttk.Scrollbar(self,orient='vertical')
+			tree = ttk.Treeview(self,columns = columnNames, yscrollcommand = scroll.set)
+			scroll.config(command = tree.yview)
+			for column in columnNames:
+				tree.heading(column,text = column)
+				tree.column(column,width=100)
+			#delets first empty column 
+			tree['show']='headings'
+
+			scroll.pack(side=RIGHT, fill=Y)
+			tree.pack(side=LEFT,fill=BOTH)
+		
+
 			global db_rows
+
 			records = tree.get_children()
 			db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
+			
 			for row in db_rows:
-				print(row)
-				tree.insert('',0,text=row[0], values=(row[1], row[2],row[3],row[4],row[5]))
+			
+				tree.insert('',0, values=(row[0], row[1],row[2],row[3],row[4],row[5]))
 
 class Database:
 
@@ -326,13 +343,14 @@ class Database:
 
 
 	def Refresh(self):
-		print(MonthEntry2)
+		#print(MonthEntry2)
 		for a in PrzychodyVariables:
 			PrzychodyVariables[a].set(self.GetAmount(a,str(MonthEntry2.get())[0:7]))
-			print(a)
+			#print(a)
 		
-		# tree.delete(100)
-
+		# dletes all current rows from tree 
+		for line in tree.get_children():
+			tree.delete(line)
 		db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
 			
 		for row in db_rows:
@@ -359,7 +377,7 @@ class Database:
 	
 	def GetAmount(self,CategoryName,YearMonth):
 		self.YearMonth=YearMonth
-		print(self.YearMonth, CategoryName)
+		#print(self.YearMonth, CategoryName)
 		self.c.execute('SELECT SUM(Amount) FROM dane where SUBSTR(Date,1,7) = ? AND Category =?',[str(YearMonth), str(CategoryName)])
 		ValueTemp = self.c.fetchall()
 		Value = [Value1[0] for Value1 in ValueTemp]
@@ -382,9 +400,6 @@ class Database:
 			return 0.00
 		else:
 			return round(float(str(Value)[1:length]), 2)
-
-	
-		
 
 		   
 app = Window()
