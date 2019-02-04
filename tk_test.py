@@ -6,14 +6,11 @@ import sqlite3 as sql
 import datetime
 
 
-
-		
-
 class DateFunctions:
 
 	def DateFormat(number):
 
-		
+
 		if int(number) < 10:
 			return "0" + str(number)
 		return number
@@ -50,7 +47,7 @@ class Window(Tk):
 		filemenu = Menu(menubar, tearoff=0)
 		filemenu.add_command(label='save settings',)
 		self.config(menu=menubar)
-		
+
 
 
 		#creates dictionary for list of all pages
@@ -64,19 +61,19 @@ class Window(Tk):
 		self.show_frame(StartPage)
 
 	def show_frame(self,cont):
-	
+
 		frame = self.frames[cont]
 		frame.update_idletasks()
 		frame.tkraise()
-		
+
 
 class MenuBar(Menu):
-	
+
 	def __init__(self,parent):
 		Menu.__init__(self,parent)
 
-	
-		
+
+
 		self.add_command(label='Main', command = lambda: app.show_frame(MainPage))
 		self.add_command(label='Add', command = lambda: app.show_frame(AddPage))
 		self.add_command(label='View', command = lambda: app.show_frame(ViewPage))
@@ -101,11 +98,11 @@ class StartPage(Frame):
 class MainPage(Frame):
 
 
-	
+
 	def __init__(self,parent,controller):
 			Frame .__init__(self,parent)
 
-			
+
 
 			names = ['eKonto','Cash','eMax','Retirement','Target','Emergency','Fun']
 			Przychody = ['Wynagrodzenie', 'Przychody z kapitalu', 'Inne przychody']
@@ -116,14 +113,14 @@ class MainPage(Frame):
 			RozchodyVariables = {}
 			PrzychodyVariables = {}
 			namesVariables = {}
-			
+
 			YearMonth=DateFunctions.CurrentYearMonth
 			MonthLabel = Label(self,text='Month')
 			MonthLabel.grid(row=0,column=0)
 
 			MonthEntryVariable = StringVar()
 			MonthEntryVariable .set(DateFunctions.CurrentYearMonth)
-			
+
 
 			MonthEntry = Entry(self,textvariable = MonthEntryVariable)
 			MonthEntry.grid(row=0,column=1)
@@ -144,7 +141,7 @@ class MainPage(Frame):
 				i=i+1
 			#############
 			##PRZYCHODY##
-			#############	
+			#############
 			i=i+2
 			for name in Przychody:
 				LabelName = Label(self,text=name)
@@ -159,7 +156,7 @@ class MainPage(Frame):
 
 				i=i+1
 
-			############		
+			############
 			##ROZCHODY##
 			############
 			i=i-len(Przychody)
@@ -180,17 +177,17 @@ class MainPage(Frame):
 				i=i+1
 
 
-				RefreshButton = Button(self,text = 'Refresh', command = lambda: DB.Refresh())
-				RefreshButton.grid(row = 0, column =2)
-				global ValueTest
-				ValueTest=StringVar()
-				ValueTest.set(DB.GetAmount('Wynagrodzenie',MonthEntryVariable.get()))
+			RefreshButton = Button(self,text = 'Refresh', command = lambda: DB.Refresh())
+			RefreshButton.grid(row = 0, column =2)
+			global ValueTest
+			ValueTest=StringVar()
+			ValueTest.set(DB.GetAmount('Wynagrodzenie',MonthEntryVariable.get()))
 
-				LabelValueTest= Label(self,textvariable=ValueTest)
-				LabelValueTest.grid(row=7,column=7)
+			LabelValueTest= Label(self,textvariable=ValueTest)
+			LabelValueTest.grid(row=7,column=7)
 
-				extrabutton = Button(self,text='add',command = lambda: self.adding())
-				extrabutton.grid(row =3, column=5)
+			extrabutton = Button(self,text='add',command = lambda: self.adding())
+			extrabutton.grid(row =3, column=5)
 
 	def adding(self):
 
@@ -211,8 +208,8 @@ class MainPage(Frame):
 
 class AddPage(Frame):
 
-	
-	
+
+
 	def __init__(self,parent,controller):
 			Frame .__init__(self,parent)
 
@@ -227,16 +224,16 @@ class AddPage(Frame):
 			'eMax plus- Emerytura-->eKonto', 'eMax plus-Cel dlugo-dystansowy-->eKonto', 'eMax-Emergency-->eKonto',
 			'eMax-Fundusz rozrywkowy-->eKonto',
 			'Skarbonka -->Gotówka', 'Obligacje-Emerytura-->eKonto', 'Obligacje-Cel dlugo-dystansowy-->eKonto']
-		
+
 			Types = ('Przychody', 'Rozchody', 'Transfer')
 			Payments = (
 			'eKonto', 'Cash', 'eMax plus-Emerytura', 'eMax plus-Cel dlugo-dystansowy', 'eMax-Emergency', 'eMax-Fundusz rozrywkowy')
 			Amounts = []
-			
+
 
 			global Type, Category, OptionCategory, OptionPayment
 			def set_options(*args):
-				
+
 
 				if Type.get() == '(default)':
 					return None
@@ -279,7 +276,7 @@ class AddPage(Frame):
 				i=i+1
 			global EntryDateVariable,EntryAmount, Payment
 			EntryDateVariable = StringVar()
-			EntryDateVariable .set(DateFunctions.CurrentDate)		
+			EntryDateVariable .set(DateFunctions.CurrentDate)
 
 			EntryDate = Entry(self,textvariable=EntryDateVariable)
 			EntryDate.grid(row=0,column=1)
@@ -314,48 +311,56 @@ class AddPage(Frame):
 
 			OptionPayment = OptionMenu(self, Payment, *Payments)
 			OptionPayment.grid(row=4, column=1)
-			
+
 			AddButton = Button(self,text='Add', command=lambda: DB.Add())
 			AddButton.grid(row=5, column=1)
 
-	
+
 class ViewPage(Frame):
+
 
 	def __init__(self,parent,controller):
 			Frame .__init__(self,parent)
 
-			
-			# MonthLabel = Label(self,text='Month')
-			# MonthLabel.pack(side=TOP)
-			# month=StringVar()
-			# EntryMonth = Entry(self,textvariable = month)
-			# EntryMonth.pack(side=LEFT)
-			
+
+			MonthLabel = Label(self,text='Month')
+			MonthLabel.pack(side=TOP, anchor=W)
+			month=StringVar()
+			EntryMonth = Entry(self,textvariable = month)
+			EntryMonth.pack(side=TOP, anchor=W)
+			month.set('2019-01')
+
 			global tree
 
-			
+
 			columnNames =('ID','Date','Type','Category','Amount','Payment')
 			scroll = ttk.Scrollbar(self,orient='vertical')
 			tree = ttk.Treeview(self,columns = columnNames, yscrollcommand = scroll.set)
 			scroll.config(command = tree.yview)
 			for column in columnNames:
 				tree.heading(column,text = column)
-				tree.column(column,width=100)
-			#delets first empty column 
+				tree.column(column)#,width=100)
+			#delets first empty column
 			tree['show']='headings'
 
+			self.Refersh(month)
 			scroll.pack(side=RIGHT, fill=Y)
 			tree.pack(side=LEFT,fill=BOTH)
-		
 
-			global db_rows
+			RefreshButton = Button(self,text='Refresh', command= self.Refresh(month))
+			RefreshButton.pack()
 
-			records = tree.get_children()
-			db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
-			
-			for row in db_rows:
-			
-				tree.insert('',0, values=(row[0], row[1],row[2],row[3],row[4],row[5]))
+	def Refersh(self, month):
+		self.month = month
+		global db_rows
+		# print(MonthEntry2.get())
+		records = tree.get_children()
+		#db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
+		db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(self.month.get())[0:7],))
+		for row in db_rows:
+
+			tree.insert('',0, values=(row[0], row[1],row[2],row[3],row[4],row[5]))
+
 
 class Database:
 
@@ -368,12 +373,12 @@ class Database:
 		for a in PrzychodyVariables:
 			PrzychodyVariables[a].set(self.GetAmount(a,str(MonthEntry2.get())[0:7]))
 			#print(a)
-		
-		# dletes all current rows from tree 
+
+		# dletes all current rows from tree
 		for line in tree.get_children():
 			tree.delete(line)
 		db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
-			
+
 		for row in db_rows:
 			tree.insert('',0,text=row[0], values=(row[1], row[2],row[3],row[4],row[5]))
 
@@ -395,7 +400,7 @@ class Database:
 			(str(EntryDateVariable.get()), str(Type.get()), str(Category.get()), str(EntryAmount.get()), str(Payment.get())))
 		self.db.commit()
 		self.Refresh()
-	
+
 	def GetAmount(self,CategoryName,YearMonth):
 		self.YearMonth=YearMonth
 		#print(self.YearMonth, CategoryName)
@@ -409,7 +414,7 @@ class Database:
 			return 0.00
 		else:
 			return round(float(str(Value)[1:length]), 2)
-			
+
 	def GetValue(self,CategoryName):
 		self.c.execute('SELECT SUM(Amount) FROM dane where Payment =?', [str(CategoryName)])
 		ValueTemp = self.c.fetchall()
@@ -422,7 +427,7 @@ class Database:
 		else:
 			return round(float(str(Value)[1:length]), 2)
 
-		   
+
 app = Window()
 app.geometry('800x600')
 app.title('Budget')
