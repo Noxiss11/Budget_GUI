@@ -101,6 +101,7 @@ class StartPage(Frame):
 class MainPage(Frame):
 
 
+	
 	def __init__(self,parent,controller):
 			Frame .__init__(self,parent)
 
@@ -188,9 +189,29 @@ class MainPage(Frame):
 				LabelValueTest= Label(self,textvariable=ValueTest)
 				LabelValueTest.grid(row=7,column=7)
 
+				extrabutton = Button(self,text='add',command = lambda: self.adding())
+				extrabutton.grid(row =3, column=5)
+
+	def adding(self):
+
+		def DestroyPopup():
+			popup.destroy()
+
+		popup = tk.Tk()
+
+
+		a = Label(popup,text='aaa')
+		a.pack()
+
+
+		done = Button(popup,text='Done',command = DestroyPopup)
+		done.pack()
+
+		popup.mainloop()
 
 class AddPage(Frame):
 
+	
 	
 	def __init__(self,parent,controller):
 			Frame .__init__(self,parent)
@@ -297,7 +318,7 @@ class AddPage(Frame):
 			AddButton = Button(self,text='Add', command=lambda: DB.Add())
 			AddButton.grid(row=5, column=1)
 
-
+	
 class ViewPage(Frame):
 
 	def __init__(self,parent,controller):
