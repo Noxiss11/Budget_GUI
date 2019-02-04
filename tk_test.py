@@ -177,7 +177,7 @@ class MainPage(Frame):
 				i=i+1
 
 
-			RefreshButton = Button(self,text = 'Refresh', command = lambda: DB.Refresh())
+			RefreshButton = Button(self,text = 'Refresh', command = lambda: DB.Refresh(str(MonthEntry2.get())))
 			RefreshButton.grid(row = 0, column =2)
 			global ValueTest
 			ValueTest=StringVar()
@@ -190,6 +190,9 @@ class MainPage(Frame):
 			extrabutton.grid(row =3, column=5)
 
 	def adding(self):
+
+
+
 
 		def DestroyPopup():
 			popup.destroy()
@@ -343,23 +346,21 @@ class ViewPage(Frame):
 			#delets first empty column
 			tree['show']='headings'
 
-			self.Refersh(month)
 			scroll.pack(side=RIGHT, fill=Y)
 			tree.pack(side=LEFT,fill=BOTH)
-
-			RefreshButton = Button(self,text='Refresh', command= self.Refresh(month))
+			print(month.get())
+			RefreshButton = Button(self,text='Refresh', command=lambda: DB.Refresh(str(month.get())))#Database.Refresh(str(month.get())))
 			RefreshButton.pack()
 
-	def Refersh(self, month):
-		self.month = month
-		global db_rows
-		# print(MonthEntry2.get())
-		records = tree.get_children()
-		#db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
-		db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(self.month.get())[0:7],))
-		for row in db_rows:
 
-			tree.insert('',0, values=(row[0], row[1],row[2],row[3],row[4],row[5]))
+			global db_rows
+			# print(MonthEntry2.get())
+			records = tree.get_children()
+			#db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
+			db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(month.get())[0:7],))
+			for row in db_rows:
+
+				tree.insert('',0, values=(row[0], row[1],row[2],row[3],row[4],row[5]))
 
 
 class Database:
@@ -368,22 +369,24 @@ class Database:
 	c = db.cursor()
 
 
-	def Refresh(self):
+	def Refresh(self, month):
+
+		self.month = month
 		#print(MonthEntry2)
 		for a in PrzychodyVariables:
-			PrzychodyVariables[a].set(self.GetAmount(a,str(MonthEntry2.get())[0:7]))
+			PrzychodyVariables[a].set(self.GetAmount(a,str(self.month)[0:7]))
 			#print(a)
 
 		# dletes all current rows from tree
 		for line in tree.get_children():
 			tree.delete(line)
-		db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
+		db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(self.month)[0:7],))
 
 		for row in db_rows:
 			tree.insert('',0,text=row[0], values=(row[1], row[2],row[3],row[4],row[5]))
 
 
-		print('refreshed')
+		#print('refreshed')
 	def CreateTable(self):
 
 		self.c.execute('''CREATE TABLE IF NOT EXISTS dane(ID INTEGER PRIMARY KEY, Date DATE,
@@ -399,7 +402,7 @@ class Database:
 		self.c.execute('INSERT INTO dane(Date, Type, Category, Amount, Payment) VALUES(?,?,?,?,?)',
 			(str(EntryDateVariable.get()), str(Type.get()), str(Category.get()), str(EntryAmount.get()), str(Payment.get())))
 		self.db.commit()
-		self.Refresh()
+		self.Refresh(str(MonthEntry2.get()))
 
 	def GetAmount(self,CategoryName,YearMonth):
 		self.YearMonth=YearMonth
