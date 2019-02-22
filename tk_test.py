@@ -53,7 +53,7 @@ class Window(Tk):
 		#creates dictionary for list of all pages
 		self.frames = {}
 		#creates the pages from the dictionary
-		for F in (StartPage, MainPage, AddPage, ViewPage):
+		for F in (StartPage, MainPage, ViewPage): #AddPage
 			frame = F(container, self)
 			self.frames[F] = frame
 			frame.grid(row=0, column=0,sticky='nsew')
@@ -75,7 +75,7 @@ class MenuBar(Menu):
 
 
 		self.add_command(label='Main', command = lambda: app.show_frame(MainPage))
-		self.add_command(label='Add', command = lambda: app.show_frame(AddPage))
+		#self.add_command(label='Add', command = lambda: app.show_frame(AddPage))
 		self.add_command(label='View', command = lambda: app.show_frame(ViewPage))
 		self.add_command(label='Savings', command = lambda: app.show_frame(MainPage))
 		self.add_command(label='Forecast', command = lambda: app.show_frame(MainPage))
@@ -191,134 +191,231 @@ class MainPage(Frame):
 
 	def adding(self):
 
+		popup = tk.Tk()
 
+		Przychody = ['Wynagrodzenie', 'Przychody z kapitalu', 'Inne przychody']
+
+		Rozchody = ['Zywnosc', 'Transport', 'Odziez', 'Telefon', 'Higiena', 'Zdrowie', 'Edukacja', 'Rekreacja', 'Uzywki',
+		'Dary', 'Inne', 'Oplaty', 'Srodki trwale', 'Mieszkanie', 'Oplaty mieszkanie', 'Wspolne']
+
+		Transfer = ['Cash-->eKonto', 'eKonto-->eMax plus-Emerytura', 'eKonto-->eMax plus-Cel dlugo-dystansowy',
+		'eKonto-->eMax-Emergency',
+		'eKonto-->eMax-Fundusz rozrywkowy', 'eKonto-->Cash', 'eKonto-->Obligacje-Emerytura',
+		'eKonto-->Obligacje-Cel dlugo-dystansowy',
+		'eMax plus- Emerytura-->eKonto', 'eMax plus-Cel dlugo-dystansowy-->eKonto', 'eMax-Emergency-->eKonto',
+		'eMax-Fundusz rozrywkowy-->eKonto',
+		'Skarbonka -->Gotówka', 'Obligacje-Emerytura-->eKonto', 'Obligacje-Cel dlugo-dystansowy-->eKonto']
+
+		Types = ('Przychody', 'Rozchody', 'Transfer')
+
+		Payments = ('eKonto', 'Cash', 'eMax plus-Emerytura', 'eMax plus-Cel dlugo-dystansowy', 'eMax-Emergency', 'eMax-Fundusz rozrywkowy')
+
+		Amounts = []
+
+
+		global Type, Category, OptionCategory, OptionPayment
+		def set_options(*args):
+
+
+			if Type.get() == '(default)':
+				return None
+
+			# refresh Category
+			Category.set('(select)')
+			OptionCategory['menu'].delete(0, 'end')
+
+			# pick new set of options
+
+			if Type.get() == 'Przychody':
+				new_options = Przychody
+				#print('przychody')
+			elif Type.get() == 'Rozchody':
+				new_options = Rozchody
+			else:
+				new_options = []
+
+			# add new options in
+			for item in new_options:
+				OptionCategory['menu'].add_command(label=item, command=tk._setit(Category, item))
+
+			Payment.set('eKonto')
+			OptionPayment['menu'].delete(0, 'end')
+
+			if Type.get() == 'Transfer':
+				new_options2 = Transfer
+			else:
+				new_options2 = Payments
+
+			for item in new_options2:
+				OptionPayment['menu'].add_command(label=item, command=tk._setit(Payment, item))
+
+
+		Labels=['Date','Type','Category','Amount','Payment']
+		i=0
+		for name in Labels:
+			LabelName = Label(popup,text=name)
+			LabelName.grid(row=i, column=0)
+			i=i+1
+
+		global EntryDateVariable,EntryAmount, Payment
+
+		#fills the date entry with current date, varaiable is created based on popup object
+		EntryDateVariable = StringVar(popup)
+		EntryDateVariable .set(DateFunctions.CurrentDate)
+
+		EntryDate = Entry(popup,textvariable=EntryDateVariable)
+		EntryDate.grid(row=0,column=1)
+
+		Type = StringVar()
+		Type.set('Rozchody')
+
+		LabelType = Label(popup,text='Type')
+		LabelType.grid(row=1, column=0)
+
+		OptionType = OptionMenu(popup, Type, *Types)
+		OptionType.grid(row=1, column=1)
+
+		# trace varaible and change drop down
+		Type.trace('w', set_options)
+
+		Category = StringVar()
+		Category.set('Zywnosc')
+
+		LabelCategory = Label(popup,text='Category')
+		LabelCategory.grid(row=2, column=0)
+
+		OptionCategory = OptionMenu(popup, Category, 'Zywnosc')
+		OptionCategory.grid(row=2, column=1)
+
+		EntryAmount = Entry(popup,width=9)
+		EntryAmount.grid(row=3, column=1)
+
+
+		Payment = StringVar()
+		Payment.set('eKonto')
+
+		OptionPayment = OptionMenu(popup, Payment, *Payments)
+		OptionPayment.grid(row=4, column=1)
+
+		AddButton = Button(popup,text='Add', command=lambda: DB.Add())
+		AddButton.grid(row=5, column=1)
 
 
 		def DestroyPopup():
 			popup.destroy()
 
-		popup = tk.Tk()
-
-
-		a = Label(popup,text='aaa')
-		a.pack()
-
-
-		done = Button(popup,text='Done',command = DestroyPopup)
-		done.pack()
-
 		popup.mainloop()
 
-class AddPage(Frame):
-
-
-
-	def __init__(self,parent,controller):
-			Frame .__init__(self,parent)
-
-
-			Przychody = ['Wynagrodzenie', 'Przychody z kapitalu', 'Inne przychody']
-			Rozchody = ['Zywnosc', 'Transport', 'Odziez', 'Telefon', 'Higiena', 'Zdrowie', 'Edukacja', 'Rekreacja', 'Uzywki',
-			'Dary', 'Inne', 'Oplaty', 'Srodki trwale', 'Mieszkanie', 'Oplaty mieszkanie', 'Wspolne']
-			Transfer = ['Cash-->eKonto', 'eKonto-->eMax plus-Emerytura', 'eKonto-->eMax plus-Cel dlugo-dystansowy',
-			'eKonto-->eMax-Emergency',
-			'eKonto-->eMax-Fundusz rozrywkowy', 'eKonto-->Cash', 'eKonto-->Obligacje-Emerytura',
-			'eKonto-->Obligacje-Cel dlugo-dystansowy',
-			'eMax plus- Emerytura-->eKonto', 'eMax plus-Cel dlugo-dystansowy-->eKonto', 'eMax-Emergency-->eKonto',
-			'eMax-Fundusz rozrywkowy-->eKonto',
-			'Skarbonka -->Gotówka', 'Obligacje-Emerytura-->eKonto', 'Obligacje-Cel dlugo-dystansowy-->eKonto']
-
-			Types = ('Przychody', 'Rozchody', 'Transfer')
-			Payments = (
-			'eKonto', 'Cash', 'eMax plus-Emerytura', 'eMax plus-Cel dlugo-dystansowy', 'eMax-Emergency', 'eMax-Fundusz rozrywkowy')
-			Amounts = []
-
-
-			global Type, Category, OptionCategory, OptionPayment
-			def set_options(*args):
-
-
-				if Type.get() == '(default)':
-					return None
-
-				# refresh Category
-				Category.set('(select)')
-				OptionCategory['menu'].delete(0, 'end')
-
-				# pick new set of options
-
-				if Type.get() == 'Przychody':
-					new_options = Przychody
-					#print('przychody')
-				elif Type.get() == 'Rozchody':
-					new_options = Rozchody
-				else:
-					new_options = []
-
-				# add new options in
-				for item in new_options:
-					OptionCategory['menu'].add_command(label=item, command=tk._setit(Category, item))
-
-				Payment.set('eKonto')
-				OptionPayment['menu'].delete(0, 'end')
-
-				if Type.get() == 'Transfer':
-					new_options2 = Transfer
-				else:
-					new_options2 = Payments
-
-				for item in new_options2:
-					OptionPayment['menu'].add_command(label=item, command=tk._setit(Payment, item))
-
-
-			Labels=['Date','Type','Category','Amount','Payment']
-			i=0
-			for name in Labels:
-				LabelName = Label(self,text=name)
-				LabelName.grid(row=i, column=0)
-				i=i+1
-			global EntryDateVariable,EntryAmount, Payment
-			EntryDateVariable = StringVar()
-			EntryDateVariable .set(DateFunctions.CurrentDate)
-
-			EntryDate = Entry(self,textvariable=EntryDateVariable)
-			EntryDate.grid(row=0,column=1)
-
-			Type = StringVar()
-			Type.set('Rozchody')
-
-			LabelType = Label(self,text='Type')
-			LabelType.grid(row=1, column=0)
-
-			OptionType = OptionMenu(self, Type, *Types)
-			OptionType.grid(row=1, column=1)
-
-			# trace varaible and change drop down
-			Type.trace('w', set_options)
-
-			Category = StringVar()
-			Category.set('Zywnosc')
-
-			LabelCategory = Label(self,text='Category')
-			LabelCategory.grid(row=2, column=0)
-
-			OptionCategory = OptionMenu(self, Category, 'Zywnosc')
-			OptionCategory.grid(row=2, column=1)
-
-			EntryAmount = Entry(self,width=9)
-			EntryAmount.grid(row=3, column=1)
-
-
-			Payment = StringVar()
-			Payment.set('eKonto')
-
-			OptionPayment = OptionMenu(self, Payment, *Payments)
-			OptionPayment.grid(row=4, column=1)
-
-			AddButton = Button(self,text='Add', command=lambda: DB.Add())
-			AddButton.grid(row=5, column=1)
-
-
+# class AddPage(Frame):
+#
+#
+#
+# 	def __init__(self,parent,controller):
+# 			Frame .__init__(self,parent)
+#
+#
+# 			Przychody = ['Wynagrodzenie', 'Przychody z kapitalu', 'Inne przychody']
+# 			Rozchody = ['Zywnosc', 'Transport', 'Odziez', 'Telefon', 'Higiena', 'Zdrowie', 'Edukacja', 'Rekreacja', 'Uzywki',
+# 			'Dary', 'Inne', 'Oplaty', 'Srodki trwale', 'Mieszkanie', 'Oplaty mieszkanie', 'Wspolne']
+# 			Transfer = ['Cash-->eKonto', 'eKonto-->eMax plus-Emerytura', 'eKonto-->eMax plus-Cel dlugo-dystansowy',
+# 			'eKonto-->eMax-Emergency',
+# 			'eKonto-->eMax-Fundusz rozrywkowy', 'eKonto-->Cash', 'eKonto-->Obligacje-Emerytura',
+# 			'eKonto-->Obligacje-Cel dlugo-dystansowy',
+# 			'eMax plus- Emerytura-->eKonto', 'eMax plus-Cel dlugo-dystansowy-->eKonto', 'eMax-Emergency-->eKonto',
+# 			'eMax-Fundusz rozrywkowy-->eKonto',
+# 			'Skarbonka -->Gotówka', 'Obligacje-Emerytura-->eKonto', 'Obligacje-Cel dlugo-dystansowy-->eKonto']
+#
+# 			Types = ('Przychody', 'Rozchody', 'Transfer')
+# 			Payments = (
+# 			'eKonto', 'Cash', 'eMax plus-Emerytura', 'eMax plus-Cel dlugo-dystansowy', 'eMax-Emergency', 'eMax-Fundusz rozrywkowy')
+# 			Amounts = []
+#
+#
+# 			global Type, Category, OptionCategory, OptionPayment
+# 			def set_options(*args):
+#
+#
+# 				if Type.get() == '(default)':
+# 					return None
+#
+# 				# refresh Category
+# 				Category.set('(select)')
+# 				OptionCategory['menu'].delete(0, 'end')
+#
+# 				# pick new set of options
+#
+# 				if Type.get() == 'Przychody':
+# 					new_options = Przychody
+# 					#print('przychody')
+# 				elif Type.get() == 'Rozchody':
+# 					new_options = Rozchody
+# 				else:
+# 					new_options = []
+#
+# 				# add new options in
+# 				for item in new_options:
+# 					OptionCategory['menu'].add_command(label=item, command=tk._setit(Category, item))
+#
+# 				Payment.set('eKonto')
+# 				OptionPayment['menu'].delete(0, 'end')
+#
+# 				if Type.get() == 'Transfer':
+# 					new_options2 = Transfer
+# 				else:
+# 					new_options2 = Payments
+#
+# 				for item in new_options2:
+# 					OptionPayment['menu'].add_command(label=item, command=tk._setit(Payment, item))
+#
+#
+# 			Labels=['Date','Type','Category','Amount','Payment']
+# 			i=0
+# 			for name in Labels:
+# 				LabelName = Label(self,text=name)
+# 				LabelName.grid(row=i, column=0)
+# 				i=i+1
+# 			global EntryDateVariable,EntryAmount, Payment
+# 			EntryDateVariable = StringVar()
+# 			EntryDateVariable .set(DateFunctions.CurrentDate)
+#
+# 			EntryDate = Entry(self,textvariable=EntryDateVariable)
+# 			EntryDate.grid(row=0,column=1)
+#
+# 			Type = StringVar()
+# 			Type.set('Rozchody')
+#
+# 			LabelType = Label(self,text='Type')
+# 			LabelType.grid(row=1, column=0)
+#
+# 			OptionType = OptionMenu(self, Type, *Types)
+# 			OptionType.grid(row=1, column=1)
+#
+# 			# trace varaible and change drop down
+# 			Type.trace('w', set_options)
+#
+# 			Category = StringVar()
+# 			Category.set('Zywnosc')
+#
+# 			LabelCategory = Label(self,text='Category')
+# 			LabelCategory.grid(row=2, column=0)
+#
+# 			OptionCategory = OptionMenu(self, Category, 'Zywnosc')
+# 			OptionCategory.grid(row=2, column=1)
+#
+# 			EntryAmount = Entry(self,width=9)
+# 			EntryAmount.grid(row=3, column=1)
+#
+#
+# 			Payment = StringVar()
+# 			Payment.set('eKonto')
+#
+# 			OptionPayment = OptionMenu(self, Payment, *Payments)
+# 			OptionPayment.grid(row=4, column=1)
+#
+# 			AddButton = Button(self,text='Add', command=lambda: DB.Add())
+# 			AddButton.grid(row=5, column=1)
+#
+#
 class ViewPage(Frame):
 
 
