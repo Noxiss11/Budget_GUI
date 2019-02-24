@@ -4,6 +4,9 @@ import tkinter as tk
 from tkinter import ttk
 import sqlite3 as sql
 import datetime
+import locale
+
+locale.setlocale(locale.LC_ALL,'')
 
 
 class DateFunctions:
@@ -27,6 +30,10 @@ class DateFunctions:
 	CurrentDate = str(datetime.datetime.date(datetime.datetime.now()).year) + '-' + DateFormat(str(
 	datetime.datetime.date(datetime.datetime.now()).month)) + '-' + DateFormat(str(
 		datetime.datetime.date(datetime.datetime.now()).day))
+
+	def NumFormat(self,number):
+		self.number = float(number)
+		return('{:,.2f}'.format(self.number))
 
 #main class for for frame taht will be always open and in which we will see all the pages
 class Window(Tk):
@@ -109,12 +116,14 @@ class MainPage(Frame):
 			Rozchody = ['Zywnosc', 'Transport', 'Odziez', 'Telefon', 'Higiena', 'Zdrowie', 'Edukacja', 'Rekreacja', 'Uzywki',
 			'Dary', 'Inne', 'Oplaty', 'Srodki trwale', 'Mieszkanie', 'Oplaty mieszkanie', 'Wspolne']
 
-			global RozchodyVariables, PrzychodyVariables, namesVariables,MonthEntry2
+			global RozchodyVariables, PrzychodyVariables, namesVariables, MonthEntry2, RetirementValue, EmergencyValue,TargetValue, EntertainmentValue, CashValue, eKontoValue
+
+
 			RozchodyVariables = {}
 			PrzychodyVariables = {}
 			namesVariables = {}
 
-			YearMonth=DateFunctions.CurrentYearMonth
+			YearMonth = DateFunctions.CurrentYearMonth
 			MonthLabel = Label(self,text='Month')
 			MonthLabel.grid(row=0,column=0)
 
@@ -127,18 +136,80 @@ class MainPage(Frame):
 			MonthEntry2 = MonthEntry
 
 			###creates the labels for accounts
-			i=2
-			for name in names:
-				LabelName = Label(self,text=name)
-				LabelName.grid(row=i, column=0)
+			# i=2
+			# for name in names:
+			# 	LabelName = Label(self,text=name)
+			# 	LabelName.grid(row=i, column=0)
 
-				Value=StringVar()
-				Value.set(DB.GetValue(name))
+			# 	Value=StringVar()
+			# 	Value.set(DB.GetValue(name))
 
-				LabelValue = Label(self,textvariable=Value)
-				LabelValue.grid(row=i,column=1)
+			# 	LabelValue = Label(self,textvariable=Value)
+			# 	LabelValue.grid(row=i,column=1)
 
-				i=i+1
+			# 	i=i+1
+
+			# retirement labels 
+			LabelRetirement = Label(self,text='Retirement')
+			LabelRetirement.grid(row=3,column=0)
+			RetirementValue = StringVar()
+			DB.RefreshRetirement()
+			LabelRetirementValue = Label(self, textvariable =RetirementValue)
+			LabelRetirementValue.grid(row=3,column=1)
+			print(DateFunctions.NumFormat(self,float(RetirementValue.get())))
+			# emergency labels and values
+			LabelEmergency = Label(self,text='Emergency')
+			LabelEmergency.grid(row=4,column=0)
+			EmergencyValue = StringVar()
+			DB.RefreshEmergency()
+			LabelEmergencyValue = Label(self,textvariable= EmergencyValue)
+			LabelEmergencyValue.grid(row=4,column=1)
+
+			# target labels and values
+			LabelTarget = Label(self,text='Target')
+			LabelTarget.grid(row=5,column=0)
+			TargetValue = StringVar()
+			DB.RefreshTarget()
+			LabelTargetValue = Label(self,textvariable= TargetValue)
+			LabelTargetValue.grid(row=5,column=1)
+			
+			# entertainment labels and values
+			LabelEntertainment = Label(self,text='Entertainment')
+			LabelEntertainment.grid(row=6,column=0)
+			EntertainmentValue = StringVar()
+			DB.RefreshEntertainment()
+			LabelEntertainmentValue = Label(self,textvariable= EntertainmentValue)
+			LabelEntertainmentValue.grid(row=6,column=1)
+			
+			#eMax labels and values 
+			LabeleMax = Label(self, text='eMax', anchor='w')
+			LabeleMax.grid(row=7,column=0)
+			eMaxValue = StringVar()
+			eMaxValue.set(DateFunctions.NumFormat(self,(float(EmergencyValue.get()) + float(TargetValue.get()) + float(EntertainmentValue.get()) + float(RetirementValue.get()))))
+
+			LabeleMaxValue = Label(self, textvariable = eMaxValue)
+			LabeleMaxValue.grid(row=7,column=1)
+
+			#cash labels and values
+			LabelCash= Label(self,text='Cash')
+			LabelCash.grid(row=8,column=0)
+			CashValue = StringVar()
+			DB.RefreshCash()
+			LabelCashValue = Label(self,textvariable= CashValue)
+			LabelCashValue.grid(row=8,column=1)
+
+			#eKonto labels and values
+			LabeleKonto= Label(self,text='eKonto')
+			LabeleKonto.grid(row=9,column=0)
+			eKontoValue = StringVar()
+			DB.RefresheKonto()
+			LabeleKonotValue = Label(self,textvariable= eKontoValue)
+			LabeleKonotValue.grid(row=9,column=1)
+			
+
+
+			i=10
+
 			#############
 			##PRZYCHODY##
 			#############
@@ -149,7 +220,7 @@ class MainPage(Frame):
 
 				#PrzychodyVariables[name] = DB.GetAmount(name,MonthEntryVariable.get())
 				PrzychodyVariables[name]=StringVar()
-				PrzychodyVariables[name].set(DB.GetAmount(name,MonthEntryVariable.get()))
+				PrzychodyVariables[name].set('{:,.2f}'.format(DB.GetAmount(name,MonthEntryVariable.get())))
 
 				LabelValue = Label(self,textvariable = PrzychodyVariables[name])
 				LabelValue.grid(row=i,column=1)
@@ -164,15 +235,11 @@ class MainPage(Frame):
 				LabelName = Label(self,text=name)
 				LabelName.grid(row=i, column=3)
 
+				RozchodyVariables[name]=StringVar()
+				RozchodyVariables[name].set('{:,.2f}'.format(DB.GetAmount(name,MonthEntryVariable.get())))
 
-				RozchodyVariables[i] = DB.GetAmount(name,MonthEntryVariable.get())
-				Value=StringVar()
-				Value.set(RozchodyVariables[i])
-
-				LabelValue = Label(self,textvariable=Value)
+				LabelValue = Label(self,textvariable = RozchodyVariables[name])
 				LabelValue.grid(row=i,column=4)
-
-
 
 				i=i+1
 
@@ -304,6 +371,8 @@ class MainPage(Frame):
 		def DestroyPopup():
 			popup.destroy()
 
+		popup.geometry('400x400')
+		popup.title('Add')
 		popup.mainloop()
 
 # class AddPage(Frame):
@@ -462,18 +531,81 @@ class ViewPage(Frame):
 
 class Database:
 
-	db = sql.connect('C:\\Projects\\Python\\GitHub\\budget\\Budget_GUI\\Budget.db')
+	db = sql.connect('Budget.db')
 	c = db.cursor()
 
+	def RefreshRetirement(self):
+		Value = (self.GetValue('eKonto-->eMax plus-Emerytura')
+                       + self.GetValue('eMax plus-Emerytura')
+                       - self.GetValue('eMax plus-Emerytura-->eKonto'))
+		RetirementValue.set(Value)
 
+	def RefreshTarget(self):
+		Value = (self.GetValue('eKonto-->eMax plus-Cel dlugo-dystansowy')
+					+ self.GetValue('eMax plus-Cel dlugo-dystansowy')
+					- self.GetValue('eMax plus-Cel dlugo-dystansowy-->eKonto'))
+
+		TargetValue.set(Value)
+
+	def RefreshEmergency(self):
+		Value = (self.GetValue('eKonto-->eMax-Emergency')                  + self.GetValue('eMax-Emergency')
+		- self.GetValue('eMax-Emergency-->eKonto'))
+		EmergencyValue.set(Value)
+
+	def RefreshEntertainment(self):
+		Value = (self.GetValue('eKonto-->eMax-Fundusz rozrywkowy')
+		+ self.GetValue('eMax-Fundusz rozrywkowy')
+		- self.GetValue('Max-Fundusz rozrywkowy-->eKonto'))
+		EntertainmentValue.set(Value)
+
+	def RefresheKonto(self):
+		Value =  (self.GetValue('eKonto')
+                    + self.GetValue('Cash-->eKonto')
+                    + self.GetValue('eMax plus- Emerytura-->eKonto')
+                    + self.GetValue('eMax-Emergency-->eKonto')
+                    + self.GetValue('eMax plus-Cel dlugo-dystansowy-->eKonto')
+                    + self.GetValue('Max-Fundusz rozrywkowy-->eKonto')
+                    - self.GetValue('eKonto-->eMax plus- Emerytura')
+                    - self.GetValue('eKonto-->eMax-Emergency')
+                    - self.GetValue('eKonto-->eMax plus-Cel dlugo-dystansowy')
+                    - self.GetValue('eKonto-->eMax-Fundusz rozrywkowy')
+                    - self.GetValue('eKonto-->Cash'))
+		Value = DateFunctions.NumFormat(self,Value)
+		eKontoValue.set(Value)
+
+	def RefreshCash(self):
+		Value =  (self.GetValue('Cash')
+                  + self.GetValue('eKonto-->Cash')
+                  - self.GetValue('Cash-->eKonto'))
+		
+		Value = DateFunctions.NumFormat(self,Value)
+		CashValue.set(Value)
+	# def Refresh(self):
+	# 	Value =  
+	
+	
 	def Refresh(self, month):
 
+		DB.RefreshRetirement()
+		DB.RefreshTarget()
+		DB.RefreshEntertainment()
+		DB.RefreshEmergency()
+		DB.RefreshCash()
+		DB.RefresheKonto()
+		
+				#refreshes value of przychody 
 		self.month = month
-		#print(MonthEntry2)
 		for a in PrzychodyVariables:
 			PrzychodyVariables[a].set(self.GetAmount(a,str(self.month)[0:7]))
-			#print(a)
 
+		
+		#refreshes value of rozchody 
+		self.month = month
+		for a in RozchodyVariables:
+			RozchodyVariables[a].set(self.GetAmount(a,str(self.month)[0:7]))	
+		#
+		#TreeView 
+		#
 		# dletes all current rows from tree
 		for line in tree.get_children():
 			tree.delete(line)
