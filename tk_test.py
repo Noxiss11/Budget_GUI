@@ -5,6 +5,12 @@ from tkinter import ttk
 import sqlite3 as sql
 import datetime
 import locale
+import matplotlib
+
+from matplotlib import style
+matplotlib.use('TkAgg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
 
 locale.setlocale(locale.LC_ALL,'')
 
@@ -41,7 +47,7 @@ class Window(Tk):
 	def __init__(self):
 		global DB
 		DB=Database()
-
+		DB.CreateTable()
 		#creates container for all pages
 		Tk.__init__(self)
 		container = Frame(self)
@@ -60,12 +66,17 @@ class Window(Tk):
 		#creates dictionary for list of all pages
 		self.frames = {}
 		#creates the pages from the dictionary
-		for F in (StartPage, MainPage, ViewPage): #AddPage
+		for F in (StartPage, MainPage, ViewPage, IncomeGraph): #AddPage
 			frame = F(container, self)
 			self.frames[F] = frame
 			frame.grid(row=0, column=0,sticky='nsew')
 
 		self.show_frame(StartPage)
+
+	def refresh_frame(self,page):
+		frame = page(container, self)
+		self.frames[page] = frame
+		frame.grid(row=0, column=0,sticky='nsew')
 
 	def show_frame(self,cont):
 
@@ -90,7 +101,7 @@ class MenuBar(Menu):
 
 		GraphsMenu = Menu(self, tearoff=False)
 		self.add_cascade(label='Graphs', underline=0,menu=GraphsMenu)
-		GraphsMenu.add_command(label='Incomes', command = lambda: app.show_frame(MainPage))
+		GraphsMenu.add_command(label='Incomes', command = lambda: app.show_frame(IncomeGraph))
 		GraphsMenu.add_command(label='Expenditures', command = lambda: app.show_frame(MainPage))
 		GraphsMenu.add_command(label='Savings', command = lambda: app.show_frame(MainPage))
 
@@ -109,6 +120,7 @@ class MainPage(Frame):
 	def __init__(self,parent,controller):
 			Frame .__init__(self,parent)
 
+			global RozchodyVariables, PrzychodyVariables, namesVariables, MonthEntry2, RetirementValue,EmergencyValue,TargetValue, EntertainmentValue, CashValue, eKontoValue, eMaxValue, Przychody
 
 
 			names = ['eKonto','Cash','eMax','Retirement','Target','Emergency','Fun']
@@ -116,8 +128,7 @@ class MainPage(Frame):
 			Rozchody = ['Zywnosc', 'Transport', 'Odziez', 'Telefon', 'Higiena', 'Zdrowie', 'Edukacja', 'Rekreacja', 'Uzywki',
 			'Dary', 'Inne', 'Oplaty', 'Srodki trwale', 'Mieszkanie', 'Oplaty mieszkanie', 'Wspolne']
 
-			global RozchodyVariables, PrzychodyVariables, namesVariables, MonthEntry2, RetirementValue, EmergencyValue,TargetValue, EntertainmentValue, CashValue, eKontoValue
-
+			
 
 			RozchodyVariables = {}
 			PrzychodyVariables = {}
@@ -125,107 +136,102 @@ class MainPage(Frame):
 
 			YearMonth = DateFunctions.CurrentYearMonth
 			MonthLabel = Label(self,text='Month')
-			MonthLabel.grid(row=0,column=0)
+			MonthLabel.grid(row=0,column=0, sticky = 'w')
 
 			MonthEntryVariable = StringVar()
 			MonthEntryVariable .set(DateFunctions.CurrentYearMonth)
 
 
 			MonthEntry = Entry(self,textvariable = MonthEntryVariable)
-			MonthEntry.grid(row=0,column=1)
+			MonthEntry.grid(row=0,column=1, sticky = 'w')
 			MonthEntry2 = MonthEntry
 
-			###creates the labels for accounts
-			# i=2
-			# for name in names:
-			# 	LabelName = Label(self,text=name)
-			# 	LabelName.grid(row=i, column=0)
-
-			# 	Value=StringVar()
-			# 	Value.set(DB.GetValue(name))
-
-			# 	LabelValue = Label(self,textvariable=Value)
-			# 	LabelValue.grid(row=i,column=1)
-
-			# 	i=i+1
-
-			# retirement labels 
 			LabelRetirement = Label(self,text='Retirement')
-			LabelRetirement.grid(row=3,column=0)
+			LabelRetirement.grid(row=3,column=0, sticky = 'w')
 			RetirementValue = StringVar()
 			DB.RefreshRetirement()
 			LabelRetirementValue = Label(self, textvariable =RetirementValue)
-			LabelRetirementValue.grid(row=3,column=1)
+			LabelRetirementValue.grid(row=3,column=1, sticky = 'w')
 			print(DateFunctions.NumFormat(self,float(RetirementValue.get())))
 			# emergency labels and values
 			LabelEmergency = Label(self,text='Emergency')
-			LabelEmergency.grid(row=4,column=0)
+			LabelEmergency.grid(row=4,column=0, sticky = 'w')
 			EmergencyValue = StringVar()
 			DB.RefreshEmergency()
 			LabelEmergencyValue = Label(self,textvariable= EmergencyValue)
-			LabelEmergencyValue.grid(row=4,column=1)
+			LabelEmergencyValue.grid(row=4,column=1, sticky = 'w')
 
 			# target labels and values
 			LabelTarget = Label(self,text='Target')
-			LabelTarget.grid(row=5,column=0)
+			LabelTarget.grid(row=5,column=0, sticky = 'w')
 			TargetValue = StringVar()
 			DB.RefreshTarget()
 			LabelTargetValue = Label(self,textvariable= TargetValue)
-			LabelTargetValue.grid(row=5,column=1)
+			LabelTargetValue.grid(row=5,column=1, sticky = 'w')
 			
 			# entertainment labels and values
 			LabelEntertainment = Label(self,text='Entertainment')
-			LabelEntertainment.grid(row=6,column=0)
+			LabelEntertainment.grid(row=6,column=0, sticky = 'w')
 			EntertainmentValue = StringVar()
 			DB.RefreshEntertainment()
 			LabelEntertainmentValue = Label(self,textvariable= EntertainmentValue)
-			LabelEntertainmentValue.grid(row=6,column=1)
+			LabelEntertainmentValue.grid(row=6,column=1, sticky = 'w')
 			
 			#eMax labels and values 
 			LabeleMax = Label(self, text='eMax', anchor='w')
-			LabeleMax.grid(row=7,column=0)
+			LabeleMax.grid(row=7,column=0, sticky = 'w')
 			eMaxValue = StringVar()
-			eMaxValue.set(DateFunctions.NumFormat(self,(float(EmergencyValue.get()) + float(TargetValue.get()) + float(EntertainmentValue.get()) + float(RetirementValue.get()))))
+			DB.RefresheMax()
 
 			LabeleMaxValue = Label(self, textvariable = eMaxValue)
-			LabeleMaxValue.grid(row=7,column=1)
+			LabeleMaxValue.grid(row=7,column=1, sticky = 'w')
 
 			#cash labels and values
 			LabelCash= Label(self,text='Cash')
-			LabelCash.grid(row=8,column=0)
+			LabelCash.grid(row=9,column=0, sticky = 'w')
 			CashValue = StringVar()
 			DB.RefreshCash()
 			LabelCashValue = Label(self,textvariable= CashValue)
-			LabelCashValue.grid(row=8,column=1)
+			LabelCashValue.grid(row=9,column=1, sticky = 'w')
 
 			#eKonto labels and values
 			LabeleKonto= Label(self,text='eKonto')
-			LabeleKonto.grid(row=9,column=0)
+			LabeleKonto.grid(row=10,column=0, sticky = 'w')
 			eKontoValue = StringVar()
 			DB.RefresheKonto()
 			LabeleKonotValue = Label(self,textvariable= eKontoValue)
-			LabeleKonotValue.grid(row=9,column=1)
+			LabeleKonotValue.grid(row=10,column=1, sticky = 'w')
 			
 
 
-			i=10
-
+			i=12
+   
 			#############
 			##PRZYCHODY##
 			#############
 			i=i+2
+			PrzychodySum=0
 			for name in Przychody:
 				LabelName = Label(self,text=name)
-				LabelName.grid(row=i, column=0)
+				LabelName.grid(row=i, column=0, sticky = 'w')
 
 				#PrzychodyVariables[name] = DB.GetAmount(name,MonthEntryVariable.get())
 				PrzychodyVariables[name]=StringVar()
 				PrzychodyVariables[name].set('{:,.2f}'.format(DB.GetAmount(name,MonthEntryVariable.get())))
-
+				PrzychodySum += DB.GetAmount(name,MonthEntryVariable.get())
 				LabelValue = Label(self,textvariable = PrzychodyVariables[name])
-				LabelValue.grid(row=i,column=1)
+				LabelValue.grid(row=i,column=1, sticky = 'w')
 
 				i=i+1
+
+
+			#Przychody labels and values 
+			LabelPrzychody = Label(self, text='Total income', anchor='w')
+			LabelPrzychody.grid(row=i,column=0, sticky = 'w')
+			PrzychodyValue = StringVar()
+			PrzychodyValue.set(PrzychodySum)
+			PrzychodyValue = Label(self,textvariable = PrzychodyValue)
+			PrzychodyValue.grid(row=i,column=1, sticky = 'w')
 
 			############
 			##ROZCHODY##
@@ -233,28 +239,28 @@ class MainPage(Frame):
 			i=i-len(Przychody)
 			for name in Rozchody:
 				LabelName = Label(self,text=name)
-				LabelName.grid(row=i, column=3)
+				LabelName.grid(row=i, column=3, sticky = 'w')
 
 				RozchodyVariables[name]=StringVar()
 				RozchodyVariables[name].set('{:,.2f}'.format(DB.GetAmount(name,MonthEntryVariable.get())))
 
 				LabelValue = Label(self,textvariable = RozchodyVariables[name])
-				LabelValue.grid(row=i,column=4)
+				LabelValue.grid(row=i,column=4, sticky = 'w')
 
 				i=i+1
 
 
 			RefreshButton = Button(self,text = 'Refresh', command = lambda: DB.Refresh(str(MonthEntry2.get())))
-			RefreshButton.grid(row = 0, column =2)
+			RefreshButton.grid(row = 0, column =2, sticky = 'w')
 			global ValueTest
 			ValueTest=StringVar()
 			ValueTest.set(DB.GetAmount('Wynagrodzenie',MonthEntryVariable.get()))
 
 			LabelValueTest= Label(self,textvariable=ValueTest)
-			LabelValueTest.grid(row=7,column=7)
+			LabelValueTest.grid(row=7,column=7, sticky = 'w')
 
 			extrabutton = Button(self,text='add',command = lambda: self.adding())
-			extrabutton.grid(row =3, column=5)
+			extrabutton.grid(row =3, column=5, sticky = 'w')
 
 	def adding(self):
 
@@ -269,7 +275,7 @@ class MainPage(Frame):
 		'eKonto-->eMax-Emergency',
 		'eKonto-->eMax-Fundusz rozrywkowy', 'eKonto-->Cash', 'eKonto-->Obligacje-Emerytura',
 		'eKonto-->Obligacje-Cel dlugo-dystansowy',
-		'eMax plus- Emerytura-->eKonto', 'eMax plus-Cel dlugo-dystansowy-->eKonto', 'eMax-Emergency-->eKonto',
+		'eMax plus-Emerytura-->eKonto', 'eMax plus-Cel dlugo-dystansowy-->eKonto', 'eMax-Emergency-->eKonto',
 		'eMax-Fundusz rozrywkowy-->eKonto',
 		'Skarbonka -->Gotówka', 'Obligacje-Emerytura-->eKonto', 'Obligacje-Cel dlugo-dystansowy-->eKonto']
 
@@ -321,7 +327,7 @@ class MainPage(Frame):
 		i=0
 		for name in Labels:
 			LabelName = Label(popup,text=name)
-			LabelName.grid(row=i, column=0)
+			LabelName.grid(row=i, column=0, sticky='w')
 			i=i+1
 
 		global EntryDateVariable,EntryAmount, Payment
@@ -331,41 +337,41 @@ class MainPage(Frame):
 		EntryDateVariable .set(DateFunctions.CurrentDate)
 
 		EntryDate = Entry(popup,textvariable=EntryDateVariable)
-		EntryDate.grid(row=0,column=1)
+		EntryDate.grid(row=0,column=1, sticky='w')
 
-		Type = StringVar()
+		Type = StringVar(popup)
 		Type.set('Rozchody')
 
 		LabelType = Label(popup,text='Type')
-		LabelType.grid(row=1, column=0)
+		LabelType.grid(row=1, column=0, sticky='w')
 
 		OptionType = OptionMenu(popup, Type, *Types)
-		OptionType.grid(row=1, column=1)
+		OptionType.grid(row=1, column=1, sticky = 'w')
 
 		# trace varaible and change drop down
 		Type.trace('w', set_options)
 
-		Category = StringVar()
+		Category = StringVar(popup)
 		Category.set('Zywnosc')
 
 		LabelCategory = Label(popup,text='Category')
-		LabelCategory.grid(row=2, column=0)
+		LabelCategory.grid(row=2, column=0, sticky='w')
 
 		OptionCategory = OptionMenu(popup, Category, 'Zywnosc')
-		OptionCategory.grid(row=2, column=1)
+		OptionCategory.grid(row=2, column=1, sticky='w')
 
 		EntryAmount = Entry(popup,width=9)
-		EntryAmount.grid(row=3, column=1)
+		EntryAmount.grid(row=3, column=1,sticky='w')
 
 
-		Payment = StringVar()
+		Payment = StringVar(popup)
 		Payment.set('eKonto')
 
 		OptionPayment = OptionMenu(popup, Payment, *Payments)
-		OptionPayment.grid(row=4, column=1)
+		OptionPayment.grid(row=4, column=1, sticky = 'w')
 
 		AddButton = Button(popup,text='Add', command=lambda: DB.Add())
-		AddButton.grid(row=5, column=1)
+		AddButton.grid(row=5, column=1, sticky='w')
 
 
 		def DestroyPopup():
@@ -375,116 +381,6 @@ class MainPage(Frame):
 		popup.title('Add')
 		popup.mainloop()
 
-# class AddPage(Frame):
-#
-#
-#
-# 	def __init__(self,parent,controller):
-# 			Frame .__init__(self,parent)
-#
-#
-# 			Przychody = ['Wynagrodzenie', 'Przychody z kapitalu', 'Inne przychody']
-# 			Rozchody = ['Zywnosc', 'Transport', 'Odziez', 'Telefon', 'Higiena', 'Zdrowie', 'Edukacja', 'Rekreacja', 'Uzywki',
-# 			'Dary', 'Inne', 'Oplaty', 'Srodki trwale', 'Mieszkanie', 'Oplaty mieszkanie', 'Wspolne']
-# 			Transfer = ['Cash-->eKonto', 'eKonto-->eMax plus-Emerytura', 'eKonto-->eMax plus-Cel dlugo-dystansowy',
-# 			'eKonto-->eMax-Emergency',
-# 			'eKonto-->eMax-Fundusz rozrywkowy', 'eKonto-->Cash', 'eKonto-->Obligacje-Emerytura',
-# 			'eKonto-->Obligacje-Cel dlugo-dystansowy',
-# 			'eMax plus- Emerytura-->eKonto', 'eMax plus-Cel dlugo-dystansowy-->eKonto', 'eMax-Emergency-->eKonto',
-# 			'eMax-Fundusz rozrywkowy-->eKonto',
-# 			'Skarbonka -->Gotówka', 'Obligacje-Emerytura-->eKonto', 'Obligacje-Cel dlugo-dystansowy-->eKonto']
-#
-# 			Types = ('Przychody', 'Rozchody', 'Transfer')
-# 			Payments = (
-# 			'eKonto', 'Cash', 'eMax plus-Emerytura', 'eMax plus-Cel dlugo-dystansowy', 'eMax-Emergency', 'eMax-Fundusz rozrywkowy')
-# 			Amounts = []
-#
-#
-# 			global Type, Category, OptionCategory, OptionPayment
-# 			def set_options(*args):
-#
-#
-# 				if Type.get() == '(default)':
-# 					return None
-#
-# 				# refresh Category
-# 				Category.set('(select)')
-# 				OptionCategory['menu'].delete(0, 'end')
-#
-# 				# pick new set of options
-#
-# 				if Type.get() == 'Przychody':
-# 					new_options = Przychody
-# 					#print('przychody')
-# 				elif Type.get() == 'Rozchody':
-# 					new_options = Rozchody
-# 				else:
-# 					new_options = []
-#
-# 				# add new options in
-# 				for item in new_options:
-# 					OptionCategory['menu'].add_command(label=item, command=tk._setit(Category, item))
-#
-# 				Payment.set('eKonto')
-# 				OptionPayment['menu'].delete(0, 'end')
-#
-# 				if Type.get() == 'Transfer':
-# 					new_options2 = Transfer
-# 				else:
-# 					new_options2 = Payments
-#
-# 				for item in new_options2:
-# 					OptionPayment['menu'].add_command(label=item, command=tk._setit(Payment, item))
-#
-#
-# 			Labels=['Date','Type','Category','Amount','Payment']
-# 			i=0
-# 			for name in Labels:
-# 				LabelName = Label(self,text=name)
-# 				LabelName.grid(row=i, column=0)
-# 				i=i+1
-# 			global EntryDateVariable,EntryAmount, Payment
-# 			EntryDateVariable = StringVar()
-# 			EntryDateVariable .set(DateFunctions.CurrentDate)
-#
-# 			EntryDate = Entry(self,textvariable=EntryDateVariable)
-# 			EntryDate.grid(row=0,column=1)
-#
-# 			Type = StringVar()
-# 			Type.set('Rozchody')
-#
-# 			LabelType = Label(self,text='Type')
-# 			LabelType.grid(row=1, column=0)
-#
-# 			OptionType = OptionMenu(self, Type, *Types)
-# 			OptionType.grid(row=1, column=1)
-#
-# 			# trace varaible and change drop down
-# 			Type.trace('w', set_options)
-#
-# 			Category = StringVar()
-# 			Category.set('Zywnosc')
-#
-# 			LabelCategory = Label(self,text='Category')
-# 			LabelCategory.grid(row=2, column=0)
-#
-# 			OptionCategory = OptionMenu(self, Category, 'Zywnosc')
-# 			OptionCategory.grid(row=2, column=1)
-#
-# 			EntryAmount = Entry(self,width=9)
-# 			EntryAmount.grid(row=3, column=1)
-#
-#
-# 			Payment = StringVar()
-# 			Payment.set('eKonto')
-#
-# 			OptionPayment = OptionMenu(self, Payment, *Payments)
-# 			OptionPayment.grid(row=4, column=1)
-#
-# 			AddButton = Button(self,text='Add', command=lambda: DB.Add())
-# 			AddButton.grid(row=5, column=1)
-#
-#
 class ViewPage(Frame):
 
 
@@ -495,9 +391,14 @@ class ViewPage(Frame):
 			MonthLabel = Label(self,text='Month')
 			MonthLabel.pack(side=TOP, anchor=W)
 			month=StringVar()
+		
 			EntryMonth = Entry(self,textvariable = month)
+			EntryMonth.config(width=10)
 			EntryMonth.pack(side=TOP, anchor=W)
-			month.set('2019-01')
+			month.set(DateFunctions.CurrentYearMonth)
+			RefreshButton = Button(self,text='Refresh', command=lambda: DB.Refresh(str(month.get())))#Database.Refresh(str(month.get())))
+			RefreshButton.pack(anchor = 'w')
+
 
 			global tree
 
@@ -515,9 +416,7 @@ class ViewPage(Frame):
 			scroll.pack(side=RIGHT, fill=Y)
 			tree.pack(side=LEFT,fill=BOTH)
 			print(month.get())
-			RefreshButton = Button(self,text='Refresh', command=lambda: DB.Refresh(str(month.get())))#Database.Refresh(str(month.get())))
-			RefreshButton.pack()
-
+			
 
 			global db_rows
 			# print(MonthEntry2.get())
@@ -528,6 +427,29 @@ class ViewPage(Frame):
 
 				tree.insert('',0, values=(row[0], row[1],row[2],row[3],row[4],row[5]))
 
+class IncomeGraph(Frame):
+	def __init__(self,parent,controller):
+			Frame .__init__(self,parent) 
+			f = Figure(figsize = (5,5), dpi=100) 
+			a = f.add_subplot(111)
+			incomes = []
+			monthIncome = 0
+			months = DB.GetMonths()
+			for month in months:
+				for income in Przychody:
+					monthIncome += float(DB.GetAmount(income,month))
+
+				incomes.append(monthIncome)
+				monthIncome = 0
+
+			a.plot(months,incomes)
+			print(DB.GetMonths())
+
+
+			canvas = FigureCanvasTkAgg(f,self)
+			canvas.draw()
+			canvas.get_tk_widget().pack(side=TOP,fill=BOTH, expand = True)
+
 
 class Database:
 
@@ -535,9 +457,14 @@ class Database:
 	c = db.cursor()
 
 	def RefreshRetirement(self):
-		Value = (self.GetValue('eKonto-->eMax plus-Emerytura')
-                       + self.GetValue('eMax plus-Emerytura')
-                       - self.GetValue('eMax plus-Emerytura-->eKonto'))
+		Value = (float(self.GetValue('eKonto-->eMax plus-Emerytura'))
+                       + float(self.GetValue('eMax plus-Emerytura'))
+                       - float(self.GetValue('eMax plus-Emerytura-->eKonto')))
+
+		print(float(self.GetValue('eKonto-->eMax plus-Emerytura')),
+                        float(self.GetValue('eMax plus-Emerytura')),
+                        float(self.GetValue('eMax plus-Emerytura-->eKonto')))
+		# Value = DateFunctions.NumFormat(self,Value)
 		RetirementValue.set(Value)
 
 	def RefreshTarget(self):
@@ -548,7 +475,8 @@ class Database:
 		TargetValue.set(Value)
 
 	def RefreshEmergency(self):
-		Value = (self.GetValue('eKonto-->eMax-Emergency')                  + self.GetValue('eMax-Emergency')
+		Value = (self.GetValue('eKonto-->eMax-Emergency')
+		+ self.GetValue('eMax-Emergency')
 		- self.GetValue('eMax-Emergency-->eKonto'))
 		EmergencyValue.set(Value)
 
@@ -561,11 +489,11 @@ class Database:
 	def RefresheKonto(self):
 		Value =  (self.GetValue('eKonto')
                     + self.GetValue('Cash-->eKonto')
-                    + self.GetValue('eMax plus- Emerytura-->eKonto')
+                    + self.GetValue('eMax plus-Emerytura-->eKonto')
                     + self.GetValue('eMax-Emergency-->eKonto')
                     + self.GetValue('eMax plus-Cel dlugo-dystansowy-->eKonto')
                     + self.GetValue('Max-Fundusz rozrywkowy-->eKonto')
-                    - self.GetValue('eKonto-->eMax plus- Emerytura')
+                    - self.GetValue('eKonto-->eMax plus-Emerytura')
                     - self.GetValue('eKonto-->eMax-Emergency')
                     - self.GetValue('eKonto-->eMax plus-Cel dlugo-dystansowy')
                     - self.GetValue('eKonto-->eMax-Fundusz rozrywkowy')
@@ -580,9 +508,12 @@ class Database:
 		
 		Value = DateFunctions.NumFormat(self,Value)
 		CashValue.set(Value)
-	# def Refresh(self):
-	# 	Value =  
-	
+
+	def RefresheMax(self):
+		
+		Value = (float(RetirementValue.get()) + float(TargetValue.get())+float(EmergencyValue.get())+float(EntertainmentValue.get())) 
+		Value = DateFunctions.NumFormat(self,Value)
+		eMaxValue.set(Value)
 	
 	def Refresh(self, month):
 
@@ -590,6 +521,7 @@ class Database:
 		DB.RefreshTarget()
 		DB.RefreshEntertainment()
 		DB.RefreshEmergency()
+		DB.RefresheMax()
 		DB.RefreshCash()
 		DB.RefresheKonto()
 		
@@ -629,11 +561,15 @@ class Database:
 		# print(EntryDateVariable.get(),EntryAmount,EntryAmount.get())
 
 		self.c.execute('INSERT INTO dane(Date, Type, Category, Amount, Payment) VALUES(?,?,?,?,?)',
-			(str(EntryDateVariable.get()), str(Type.get()), str(Category.get()), str(EntryAmount.get()), str(Payment.get())))
+			(str(EntryDateVariable.get()), str(Type.get()), str(Category.get()), str(EntryAmount.get()).replace(',','.'), str(Payment.get())))
 		self.db.commit()
 		self.Refresh(str(MonthEntry2.get()))
+		app.__init__()
 
 	def GetAmount(self,CategoryName,YearMonth):
+		'''
+			pass CategoryName and YearMonth
+		'''
 		self.YearMonth=YearMonth
 		#print(self.YearMonth, CategoryName)
 		self.c.execute('SELECT SUM(Amount) FROM dane where SUBSTR(Date,1,7) = ? AND Category =?',[str(YearMonth), str(CategoryName)])
@@ -652,6 +588,20 @@ class Database:
 		ValueTemp = self.c.fetchall()
 		Value = [Value1[0] for Value1 in ValueTemp]
 		length = len(str(Value)) - 1
+		
+		# print(str(Value)=='[None]')
+		if str(Value) == '[None]':
+			return 0.00
+		else:
+			return round(float(str(Value)[1:length]), 2)
+
+	
+	def GetValue2(self,CategoryName,YearMonth):
+		self.YearMonth = str(YearMonth) + '-01'
+		self.c.execute('SELECT SUM(Amount) FROM dane where Payment =? AND Date <date(?) ', [str(CategoryName), str(self.YearMonth)])
+		ValueTemp = self.c.fetchall()
+		Value = [Value1[0] for Value1 in ValueTemp]
+		length = len(str(Value)) - 1
 
 		# print(str(Value)=='[None]')
 		if str(Value) == '[None]':
@@ -659,6 +609,12 @@ class Database:
 		else:
 			return round(float(str(Value)[1:length]), 2)
 
+	def GetMonths(self):
+
+		self.c.execute('SELECT DISTINCT SUBSTR(Date,1,7) as d from dane ORDER BY d ASC') 
+		ValueTemp = self.c.fetchall()
+		Value = [Value1[0] for Value1 in ValueTemp]
+		return Value
 
 app = Window()
 app.geometry('800x600')
