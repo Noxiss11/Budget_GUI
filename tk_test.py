@@ -9,8 +9,12 @@ import matplotlib
 
 from matplotlib import style
 matplotlib.use('TkAgg')
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 from matplotlib.figure import Figure
+import matplotlib.animation as animation
+
+style.use('ggplot')
+
 
 locale.setlocale(locale.LC_ALL,'')
 
@@ -50,13 +54,13 @@ class Window(Tk):
 		DB.CreateTable()
 		#creates container for all pages
 		Tk.__init__(self)
-		container = Frame(self)
-		container.pack(side="top", fill="both", expand = "True")
+		self.container = Frame(self)
+		self.container.pack(side="top", fill="both", expand = "True")
 
-		container.grid_rowconfigure(0,weight=1)
-		container.grid_columnconfigure(0,weight=1)
+		self.container.grid_rowconfigure(0,weight=1)
+		self.container.grid_columnconfigure(0,weight=1)
 
-		menubar = MenuBar(container)
+		menubar = MenuBar(self.container)
 		filemenu = Menu(menubar, tearoff=0)
 		filemenu.add_command(label='save settings',)
 		self.config(menu=menubar)
@@ -66,15 +70,19 @@ class Window(Tk):
 		#creates dictionary for list of all pages
 		self.frames = {}
 		#creates the pages from the dictionary
-		for F in (StartPage, MainPage, ViewPage, IncomeGraph): #AddPage
-			frame = F(container, self)
+		for F in (StartPage, MainPage, ViewPage, IncomeGraph,ExpenditureGraph): #AddPage
+			frame = F(self.container, self)
 			self.frames[F] = frame
 			frame.grid(row=0, column=0,sticky='nsew')
 
 		self.show_frame(StartPage)
 
 	def refresh_frame(self,page):
-		frame = page(container, self)
+		frame = page(self.container, self)
+		self.frames[page] = frame
+		frame.grid(row=0, column=0,sticky='nsew')
+	def refresh_frame2(self,page):
+		frame = page(self.container, self)
 		self.frames[page] = frame
 		frame.grid(row=0, column=0,sticky='nsew')
 
@@ -102,7 +110,7 @@ class MenuBar(Menu):
 		GraphsMenu = Menu(self, tearoff=False)
 		self.add_cascade(label='Graphs', underline=0,menu=GraphsMenu)
 		GraphsMenu.add_command(label='Incomes', command = lambda: app.show_frame(IncomeGraph))
-		GraphsMenu.add_command(label='Expenditures', command = lambda: app.show_frame(MainPage))
+		GraphsMenu.add_command(label='Expenditures', command = lambda: app.show_frame(ExpenditureGraph))
 		GraphsMenu.add_command(label='Savings', command = lambda: app.show_frame(MainPage))
 
 #code of the actual page/window
@@ -120,7 +128,7 @@ class MainPage(Frame):
 	def __init__(self,parent,controller):
 			Frame .__init__(self,parent)
 
-			global RozchodyVariables, PrzychodyVariables, namesVariables, MonthEntry2, RetirementValue,EmergencyValue,TargetValue, EntertainmentValue, CashValue, eKontoValue, eMaxValue, Przychody
+			global RozchodyVariables, PrzychodyVariables, namesVariables, MonthEntry2, RetirementValue,EmergencyValue,TargetValue, EntertainmentValue, CashValue, eKontoValue, eMaxValue, Przychody, Rozchody
 
 
 			names = ['eKonto','Cash','eMax','Retirement','Target','Emergency','Fun']
@@ -429,26 +437,77 @@ class ViewPage(Frame):
 
 class IncomeGraph(Frame):
 	def __init__(self,parent,controller):
+			
 			Frame .__init__(self,parent) 
-			f = Figure(figsize = (5,5), dpi=100) 
-			a = f.add_subplot(111)
-			incomes = []
-			monthIncome = 0
-			months = DB.GetMonths()
-			for month in months:
+			self.f = Figure(figsize = (5,5), dpi=100) 
+			self.aplot = self.f.add_subplot(111)
+			self.incomes = []
+			self.monthIncome = 0
+			self.months = DB.GetMonths()
+			for month in self.months:
 				for income in Przychody:
-					monthIncome += float(DB.GetAmount(income,month))
+					self.monthIncome += float(DB.GetAmount(income,month))
 
-				incomes.append(monthIncome)
-				monthIncome = 0
+				self.incomes.append(self.monthIncome)
+				self.monthIncome = 0
 
-			a.plot(months,incomes)
+			self.aplot.plot(self.months,self.incomes)
 			print(DB.GetMonths())
 
+			self.canvas = FigureCanvasTkAgg(self.f,self)
+			self.canvas.draw()
+			self.canvas.get_tk_widget().pack(side=TOP,fill=BOTH, expand = True)
 
-			canvas = FigureCanvasTkAgg(f,self)
-			canvas.draw()
-			canvas.get_tk_widget().pack(side=TOP,fill=BOTH, expand = True)
+	def refresh(self):
+		self.incomes = []
+		self.monthIncome = 0
+		self.months = DB.GetMonths()
+		for month in self.months:
+			for income in Przychody:
+				self.monthIncome += float(DB.GetAmount(income,month))
+			self.incomes.append(self.monthIncome)
+			self.monthIncome = 0
+			#print(self.months,self.incomes)
+		self.aplot.clear()
+		self.aplot.plot(self.months,self.incomes)
+		self.canvas.draw()
+
+
+class ExpenditureGraph(Frame):
+	
+	def __init__(self,parent,controller):
+
+			Frame.__init__(self,parent) 
+			self.f = Figure(figsize = (5,5), dpi=100) 
+			self.bplot = self.f.add_subplot(111)
+			self.expenditures = []
+			self.monthExpenditures = 0
+			self.months = DB.GetMonths()
+
+			for month in self.months:
+				for expenditure in Rozchody:
+					self.monthExpenditures += float(DB.GetAmount(expenditure, month))
+				self.expenditures.append(self.monthExpenditures)
+				self.monthExpenditures = 0
+
+			self.bplot.plot(self.months,self.expenditures)
+			self.canvasex = FigureCanvasTkAgg(self.f,self)
+			self.canvasex.draw()
+			self.canvasex.get_tk_widget().pack(side=TOP,fill=BOTH, expand = True)
+
+	def refresh(self):
+		self.expenditures = []
+		self.monthExpenditures = 0
+		self.months = DB.GetMonths()
+		for month in self.months:
+			for expenditure in Rozchody:
+				self.monthExpenditures += float(DB.GetAmount(expenditure,month))
+			self.expenditures.append(self.monthExpenditures)
+			self.monthExpenditures = 0
+			#print(self.months,self.expenditures)
+		self.bplot.clear()
+		self.bplot.plot(self.months,self.expenditures)
+		self.canvasex.draw()
 
 
 class Database:
@@ -517,6 +576,28 @@ class Database:
 	
 	def Refresh(self, month):
 
+		###############
+		#incomes##
+		###############
+		# incomes = []
+		# monthIncome = 0
+		# months = DB.GetMonths()
+		# for month in months:
+		# 	for income in Przychody:
+		# 		monthIncome += float(DB.GetAmount(income,month))
+		# 	incomes.append(monthIncome)
+		# 	monthIncome = 0
+		# aplot.clear()
+		# aplot.plot(months,incomes)
+		
+		# canvas.draw()
+		
+		# refreshes the income graph
+		app.frames[IncomeGraph].refresh()
+		
+		# refreshes the spenidnigs graph
+		app.frames[ExpenditureGraph].refresh()
+		##############
 		DB.RefreshRetirement()
 		DB.RefreshTarget()
 		DB.RefreshEntertainment()
@@ -564,7 +645,8 @@ class Database:
 			(str(EntryDateVariable.get()), str(Type.get()), str(Category.get()), str(EntryAmount.get()).replace(',','.'), str(Payment.get())))
 		self.db.commit()
 		self.Refresh(str(MonthEntry2.get()))
-		app.__init__()
+		# app.destroy()
+		# app.__init__()
 
 	def GetAmount(self,CategoryName,YearMonth):
 		'''
