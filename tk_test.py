@@ -45,6 +45,22 @@ class DateFunctions:
 		self.number = float(number)
 		return('{:,.2f}'.format(self.number))
 
+	def AddMonth(self,date):
+		"""Returnes incremented date by one month in the following format: 2019-01.
+		Impot format has to be the same"""
+
+		self.month = int(date[-2:])
+		self.year = int(date[:4])
+
+		if self.month < 9:
+			return (str(self.year) + '-0' + str(self.month+1))
+
+		elif self.month == 12:
+			return (str(self.year+1) + '-01')     
+
+		else:
+			return (str(self.year) + '-' + str(self.month+1))  
+
 #main class for for frame taht will be always open and in which we will see all the pages
 class Window(Tk):
 
@@ -70,7 +86,7 @@ class Window(Tk):
 		#creates dictionary for list of all pages
 		self.frames = {}
 		#creates the pages from the dictionary
-		for F in (StartPage, MainPage, ViewPage, IncomeGraph,ExpenditureGraph): #AddPage
+		for F in (StartPage, MainPage, ViewPage, IncomeGraph,ExpenditureGraph,SavingsGraph): #AddPage
 			frame = F(self.container, self)
 			self.frames[F] = frame
 			frame.grid(row=0, column=0,sticky='nsew')
@@ -92,7 +108,6 @@ class Window(Tk):
 		frame.update_idletasks()
 		frame.tkraise()
 
-
 class MenuBar(Menu):
 
 	def __init__(self,parent):
@@ -111,7 +126,7 @@ class MenuBar(Menu):
 		self.add_cascade(label='Graphs', underline=0,menu=GraphsMenu)
 		GraphsMenu.add_command(label='Incomes', command = lambda: app.show_frame(IncomeGraph))
 		GraphsMenu.add_command(label='Expenditures', command = lambda: app.show_frame(ExpenditureGraph))
-		GraphsMenu.add_command(label='Savings', command = lambda: app.show_frame(MainPage))
+		GraphsMenu.add_command(label='Savings', command = lambda: app.show_frame(SavingsGraph))
 
 #code of the actual page/window
 class StartPage(Frame):
@@ -510,6 +525,115 @@ class ExpenditureGraph(Frame):
 		self.canvasex.draw()
 
 
+class SavingsGraph(Frame):
+	
+	def __init__(self,parent,controller):
+
+			Frame.__init__(self,parent) 
+			self.f = Figure(figsize = (5,5), dpi=100) 
+			self.bplot = self.f.add_subplot(111)
+			self.RetirementAmounts = [] 
+			self.TargetAmounts = []
+			self.EmergencyAmounts = []
+			self.EntertainmentAmounts = []
+			self.Retirement = 0 
+			self.Target = 0
+			self.Emergency = 0
+			self.Entertainment = 0
+
+			self.months = DB.GetMonths()
+			
+
+			for month in self.months:
+				
+				self.monthRetirement = float(DB.GetValue2('eKonto-->eMax plus-Emerytura', DateFunctions.AddMonth(self,month)))+\
+				float(DB.GetValue2('eMax plus-Emerytura', DateFunctions.AddMonth(self,month))) -\
+				float(DB.GetValue2('eMax plus-Emerytura-->eKonto', DateFunctions.AddMonth(self,month)))
+				self.RetirementAmounts.append(self.monthRetirement)
+				self.monthRetirement = 0
+
+				self.monthTarget = float(DB.GetValue2('eKonto-->eMax plus-Cel dlugo-dystansowy', DateFunctions.AddMonth(self,month)))+\
+				float(DB.GetValue2('eMax plus-Cel dlugo-dystansowy', DateFunctions.AddMonth(self,month))) -\
+				float(DB.GetValue2('eMax plus-Cel dlugo-dystansowy-->eKonto', DateFunctions.AddMonth(self,month)))
+				self.TargetAmounts.append(self.monthTarget)
+				self.monthTarget = 0
+
+				self.monthEmergency = float(DB.GetValue2('eKonto-->eMax-Emergency', DateFunctions.AddMonth(self,month)))+\
+				float(DB.GetValue2('eMax-Emergency', DateFunctions.AddMonth(self,month))) -\
+				float(DB.GetValue2('eMax-Emergency-->eKonto', DateFunctions.AddMonth(self,month)))
+				self.EmergencyAmounts.append(self.monthEmergency)
+				self.monthEmergency = 0
+
+				self.monthEntertainment = float(DB.GetValue2('eKonto-->eMax-Fundusz rozrywkowy', DateFunctions.AddMonth(self,month)))+\
+				float(DB.GetValue2('eMax-Fundusz rozrywkowy', DateFunctions.AddMonth(self,month))) -\
+				float(DB.GetValue2('eMax-Fundusz rozrywkowy-->eKonto', DateFunctions.AddMonth(self,month)))
+				self.EntertainmentAmounts.append(self.monthEntertainment)
+				self.monthEntertainment = 0
+
+
+
+
+			self.bplot.plot(self.months,self.RetirementAmounts)
+			self.bplot.plot(self.months,self.TargetAmounts)
+			self.bplot.plot(self.months,self.EmergencyAmounts)
+			self.bplot.plot(self.months,self.EntertainmentAmounts)
+
+			self.canvasex = FigureCanvasTkAgg(self.f,self)
+			self.canvasex.draw()
+			self.canvasex.get_tk_widget().pack(side=TOP,fill=BOTH, expand = True)
+
+	def refresh(self):
+		
+		self.RetirementAmounts = [] 
+		self.TargetAmounts = []
+		self.EmergencyAmounts = []
+		self.EntertainmentAmounts = []
+		self.Retirement = 0 
+		self.Target = 0
+		self.Emergency = 0
+		self.Entertainment = 0
+		self.months = DB.GetMonths()
+		for month in self.months:
+			# for expenditure in Rozchody:
+			# 	self.monthExpenditures += float(DB.GetAmount(expenditure,month))
+			self.monthRetirement = float(DB.GetValue2('eKonto-->eMax plus-Emerytura', DateFunctions.AddMonth(self,month)))+\
+			float(DB.GetValue2('eMax plus-Emerytura', DateFunctions.AddMonth(self,month))) -\
+			float(DB.GetValue2('eMax plus-Emerytura-->eKonto', DateFunctions.AddMonth(self,month)))
+			self.RetirementAmounts.append(self.monthRetirement)
+			self.monthRetirement = 0
+
+			self.monthTarget = float(DB.GetValue2('eKonto-->eMax plus-Cel dlugo-dystansowy', DateFunctions.AddMonth(self,month)))+\
+			float(DB.GetValue2('eMax plus-Cel dlugo-dystansowy', DateFunctions.AddMonth(self,month))) -\
+			float(DB.GetValue2('eMax plus-Cel dlugo-dystansowy-->eKonto', DateFunctions.AddMonth(self,month)))
+			self.TargetAmounts.append(self.monthTarget)
+			self.monthTarget = 0
+			
+			self.monthEmergency = float(DB.GetValue2('eKonto-->eMax-Emergency', DateFunctions.AddMonth(self,month)))+\
+			float(DB.GetValue2('eMax-Emergency', DateFunctions.AddMonth(self,month))) -\
+			float(DB.GetValue2('eMax-Emergency-->eKonto', DateFunctions.AddMonth(self,month)))
+			self.EmergencyAmounts.append(self.monthEmergency)
+			self.monthEmergency = 0
+			
+			self.monthEntertainment = float(DB.GetValue2('eKonto-->eMax-Fundusz rozrywkowy', DateFunctions.AddMonth(self,month)))+\
+			float(DB.GetValue2('eMax-Fundusz rozrywkowy', DateFunctions.AddMonth(self,month))) -\
+			float(DB.GetValue2('eMax-Fundusz rozrywkowy-->eKonto', DateFunctions.AddMonth(self,month)))
+			self.EntertainmentAmounts.append(self.monthEntertainment)
+			self.monthEntertainment = 0
+
+
+
+			
+			#print(self.months,self.expenditures)
+		self.bplot.clear()
+
+		self.bplot.plot(self.months,self.RetirementAmounts)
+		self.bplot.plot(self.months,self.TargetAmounts)
+		self.bplot.plot(self.months,self.EmergencyAmounts)
+		self.bplot.plot(self.months,self.EntertainmentAmounts)
+
+		self.canvasex.draw()
+
+
 class Database:
 
 	db = sql.connect('Budget.db')
@@ -542,7 +666,7 @@ class Database:
 	def RefreshEntertainment(self):
 		Value = (self.GetValue('eKonto-->eMax-Fundusz rozrywkowy')
 		+ self.GetValue('eMax-Fundusz rozrywkowy')
-		- self.GetValue('Max-Fundusz rozrywkowy-->eKonto'))
+		- self.GetValue('eMax-Fundusz rozrywkowy-->eKonto'))
 		EntertainmentValue.set(Value)
 
 	def RefresheKonto(self):
@@ -575,28 +699,15 @@ class Database:
 		eMaxValue.set(Value)
 	
 	def Refresh(self, month):
-
-		###############
-		#incomes##
-		###############
-		# incomes = []
-		# monthIncome = 0
-		# months = DB.GetMonths()
-		# for month in months:
-		# 	for income in Przychody:
-		# 		monthIncome += float(DB.GetAmount(income,month))
-		# 	incomes.append(monthIncome)
-		# 	monthIncome = 0
-		# aplot.clear()
-		# aplot.plot(months,incomes)
-		
-		# canvas.draw()
 		
 		# refreshes the income graph
 		app.frames[IncomeGraph].refresh()
 		
 		# refreshes the spenidnigs graph
 		app.frames[ExpenditureGraph].refresh()
+
+		app.frames[SavingsGraph].refresh()
+
 		##############
 		DB.RefreshRetirement()
 		DB.RefreshTarget()
@@ -680,7 +791,9 @@ class Database:
 	
 	def GetValue2(self,CategoryName,YearMonth):
 		self.YearMonth = str(YearMonth) + '-01'
-		self.c.execute('SELECT SUM(Amount) FROM dane where Payment =? AND Date <date(?) ', [str(CategoryName), str(self.YearMonth)])
+		self.CategoryName = CategoryName
+		print(self.CategoryName,self.YearMonth)
+		self.c.execute('SELECT SUM(Amount) FROM dane where Payment =? AND Date <date(?) ', [str(self.CategoryName), str(self.YearMonth)])
 		ValueTemp = self.c.fetchall()
 		Value = [Value1[0] for Value1 in ValueTemp]
 		length = len(str(Value)) - 1
