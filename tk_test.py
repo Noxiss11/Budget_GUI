@@ -43,7 +43,7 @@ class DateFunctions:
 
 	def NumFormat(self,number):
 		self.number = float(number)
-		return('{:,.2f}'.format(self.number))
+		return ('{0:,.2f}'.format(self.number))
 
 	def AddMonth(self,date):
 		"""Returnes incremented date by one month in the following format: 2019-01.
@@ -189,7 +189,7 @@ class MainPage(Frame):
 			LabelTarget.grid(row=5,column=0, sticky = 'w')
 			TargetValue = StringVar()
 			DB.RefreshTarget()
-			LabelTargetValue = Label(self,textvariable= TargetValue)
+			LabelTargetValue = Label(self,textvariable = TargetValue)
 			LabelTargetValue.grid(row=5,column=1, sticky = 'w')
 			
 			# entertainment labels and values
@@ -252,7 +252,9 @@ class MainPage(Frame):
 			LabelPrzychody = Label(self, text='Total income', anchor='w')
 			LabelPrzychody.grid(row=i,column=0, sticky = 'w')
 			PrzychodyValue = StringVar()
-			PrzychodyValue.set(PrzychodySum)
+			print(PrzychodySum)
+			print(DateFunctions.NumFormat(self,PrzychodySum))
+			PrzychodyValue.set(DateFunctions.NumFormat(self,PrzychodySum))
 			PrzychodyValue = Label(self,textvariable = PrzychodyValue)
 			PrzychodyValue.grid(row=i,column=1, sticky = 'w')
 
@@ -412,7 +414,7 @@ class ViewPage(Frame):
 
 
 			MonthLabel = Label(self,text='Month')
-			MonthLabel.pack(side=TOP, anchor=W)
+			MonthLabel.pack(anchor = 'w')
 			month=StringVar()
 		
 			EntryMonth = Entry(self,textvariable = month)
@@ -422,12 +424,22 @@ class ViewPage(Frame):
 			RefreshButton = Button(self,text='Refresh', command=lambda: DB.Refresh(str(month.get())))#Database.Refresh(str(month.get())))
 			RefreshButton.pack(anchor = 'w')
 
+			EditButton = Button(self,text = 'Edit',command = lambda: self.Edit())
+			EditButton.pack()
 
 			global tree
 
 
 			columnNames =('ID','Date','Type','Category','Amount','Payment')
 
+
+			# for name in columnNames:
+			# 	name = Label(self,text = name)
+			# 	name.pack(side = LEFT)
+
+			# canvas = Canvas(self)
+			# canvas.create_line(15, 25, 200, 25)
+			# canvas.pack(fill=BOTH, expand=1)
 
 			scroll = ttk.Scrollbar(self,orient='vertical')
 			tree = ttk.Treeview(self,columns = columnNames, yscrollcommand = scroll.set)
@@ -452,6 +464,10 @@ class ViewPage(Frame):
 			# Adds data into TreeView
 			for row in db_rows:
 				tree.insert('',0,values=(row[0], row[1],row[2],row[3],row[4],row[5]))
+
+
+	def Edit(self):
+		popup = tk.Tk()
 class IncomeGraph(Frame):
 	def __init__(self,parent,controller):
 			
@@ -645,14 +661,12 @@ class Database:
 		Value = (float(self.GetValue('eKonto-->eMax plus-Emerytura'))
                        + float(self.GetValue('eMax plus-Emerytura'))
                        - float(self.GetValue('eMax plus-Emerytura-->eKonto')))
-
 		RetirementValue.set(Value)
 
 	def RefreshTarget(self):
 		Value = (self.GetValue('eKonto-->eMax plus-Cel dlugo-dystansowy')
 					+ self.GetValue('eMax plus-Cel dlugo-dystansowy')
 					- self.GetValue('eMax plus-Cel dlugo-dystansowy-->eKonto'))
-
 		TargetValue.set(Value)
 
 	def RefreshEmergency(self):
@@ -679,7 +693,6 @@ class Database:
                     - self.GetValue('eKonto-->eMax plus-Cel dlugo-dystansowy')
                     - self.GetValue('eKonto-->eMax-Fundusz rozrywkowy')
                     - self.GetValue('eKonto-->Cash'))
-		Value = DateFunctions.NumFormat(self,Value)
 		eKontoValue.set(Value)
 
 	def RefreshCash(self):
@@ -687,13 +700,12 @@ class Database:
                   + self.GetValue('eKonto-->Cash')
                   - self.GetValue('Cash-->eKonto'))
 		
-		Value = DateFunctions.NumFormat(self,Value)
 		CashValue.set(Value)
 
 	def RefresheMax(self):
 		
-		Value = (float(RetirementValue.get()) + float(TargetValue.get())+float(EmergencyValue.get())+float(EntertainmentValue.get())) 
-		Value = DateFunctions.NumFormat(self,Value)
+		Value = (float(RetirementValue.get()) + float(TargetValue.get())) #+float(EmergencyValue.get())+float(EntertainmentValue.get())) 
+	
 		eMaxValue.set(Value)
 	
 	def Refresh(self, month):
