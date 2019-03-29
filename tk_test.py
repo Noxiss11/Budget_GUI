@@ -175,7 +175,7 @@ class MainPage(Frame):
 			DB.RefreshRetirement()
 			LabelRetirementValue = Label(self, textvariable =RetirementValue)
 			LabelRetirementValue.grid(row=3,column=1, sticky = 'w')
-			print(DateFunctions.NumFormat(self,float(RetirementValue.get())))
+		#	print(DateFunctions.NumFormat(self,float(RetirementValue.get())))
 			# emergency labels and values
 			LabelEmergency = Label(self,text='Emergency')
 			LabelEmergency.grid(row=4,column=0, sticky = 'w')
@@ -427,6 +427,8 @@ class ViewPage(Frame):
 
 
 			columnNames =('ID','Date','Type','Category','Amount','Payment')
+
+
 			scroll = ttk.Scrollbar(self,orient='vertical')
 			tree = ttk.Treeview(self,columns = columnNames, yscrollcommand = scroll.set)
 			scroll.config(command = tree.yview)
@@ -438,7 +440,7 @@ class ViewPage(Frame):
 
 			scroll.pack(side=RIGHT, fill=Y)
 			tree.pack(side=LEFT,fill=BOTH)
-			print(month.get())
+			# print(month.get())
 			
 
 			global db_rows
@@ -446,10 +448,10 @@ class ViewPage(Frame):
 			records = tree.get_children()
 			#db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(MonthEntry2.get())[0:7],))
 			db_rows = DB.c.execute("SELECT ID,Date,Type,Category, Amount, Payment from dane where SUBSTR(Date,1,7) = ?",(str(month.get())[0:7],))
+			
+			# Adds data into TreeView
 			for row in db_rows:
-
-				tree.insert('',0, values=(row[0], row[1],row[2],row[3],row[4],row[5]))
-
+				tree.insert('',0,values=(row[0], row[1],row[2],row[3],row[4],row[5]))
 class IncomeGraph(Frame):
 	def __init__(self,parent,controller):
 			
@@ -467,7 +469,7 @@ class IncomeGraph(Frame):
 				self.monthIncome = 0
 
 			self.aplot.plot(self.months,self.incomes)
-			print(DB.GetMonths())
+			# print(DB.GetMonths())
 
 			self.canvas = FigureCanvasTkAgg(self.f,self)
 			self.canvas.draw()
@@ -644,10 +646,6 @@ class Database:
                        + float(self.GetValue('eMax plus-Emerytura'))
                        - float(self.GetValue('eMax plus-Emerytura-->eKonto')))
 
-		print(float(self.GetValue('eKonto-->eMax plus-Emerytura')),
-                        float(self.GetValue('eMax plus-Emerytura')),
-                        float(self.GetValue('eMax plus-Emerytura-->eKonto')))
-		# Value = DateFunctions.NumFormat(self,Value)
 		RetirementValue.set(Value)
 
 	def RefreshTarget(self):
@@ -792,7 +790,7 @@ class Database:
 	def GetValue2(self,CategoryName,YearMonth):
 		self.YearMonth = str(YearMonth) + '-01'
 		self.CategoryName = CategoryName
-		print(self.CategoryName,self.YearMonth)
+		# print(self.CategoryName,self.YearMonth)
 		self.c.execute('SELECT SUM(Amount) FROM dane where Payment =? AND Date <date(?) ', [str(self.CategoryName), str(self.YearMonth)])
 		ValueTemp = self.c.fetchall()
 		Value = [Value1[0] for Value1 in ValueTemp]
